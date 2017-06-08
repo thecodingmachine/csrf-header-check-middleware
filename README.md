@@ -21,7 +21,7 @@ What is it doing?
 The `CsrfHeaderCheckMiddleware` will check that all POST/DELETE requests and verify that the "Origin" of the request is your own website.
 
 It does so by comparing the "Origin" (or the "Referrer" header as a fallback) to the "Host" (or "X-Forwarded-Host") header.
-If the headers do not match, it will trigger an exception.
+If the headers do not match (or if the headers are not found), it will trigger an exception.
 
 Limits:
 -------
