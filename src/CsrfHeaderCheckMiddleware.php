@@ -24,7 +24,7 @@ class CsrfHeaderCheckMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
         $method = strtoupper($request->getMethod());
-        if (in_array($method, ['POST', 'DELETE'], true)) {
+        if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
             $source = $this->getSourceOrigin($request);
             $target = $this->getTargetOrigin($request);
             if ($source !== $target) {

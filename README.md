@@ -18,7 +18,7 @@ Other packages (like [Slim-CSRF](https://github.com/slimphp/Slim-Csrf)) can help
 What is it doing?
 -----------------
 
-The `CsrfHeaderCheckMiddleware` will check that all POST/DELETE requests and verify that the "Origin" of the request is your own website.
+The `CsrfHeaderCheckMiddleware` will check that all POST/PUT/DELETE requests and verify that the "Origin" of the request is your own website.
 
 It does so by comparing the "Origin" (or the "Referrer" header as a fallback) to the "Host" (or "X-Forwarded-Host") header.
 If the headers do not match (or if the headers are not found), it will trigger an exception.
@@ -26,5 +26,5 @@ If the headers do not match (or if the headers are not found), it will trigger a
 Limits:
 -------
 
-- No GET (so if your application modifies state on GET, you are screwed.)
-- Expect "Origin" or "Referrer" header to be filled. This will often be the case unless you are in a corporate environment with proxies that are fiddling with your request (sometimes done to make the request anonymous).
+- This middleware completely bypasses GET requests. If your application modifies state on GET requests, you are screwed. Of course, modification of state should only happen in POST requests (but please check twice that your routes changing state do ONLY works with POST/DELETE/PUT requests).
+- This middleware expects "Origin" or "Referrer" headers to be filled. This will often be true unless you are in a corporate environment with proxies that are fiddling with your request. For instance, some proxies are known to strip headers in order to make the request anonymous.
