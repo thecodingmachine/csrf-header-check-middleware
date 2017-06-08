@@ -1,3 +1,11 @@
+[![Latest Stable Version](https://poser.pugx.org/thecodingmachine/csrf-header-check-middleware/v/stable)](https://packagist.org/packages/thecodingmachine/csrf-header-check-middleware)
+[![Total Downloads](https://poser.pugx.org/thecodingmachine/csrf-header-check-middleware/downloads)](https://packagist.org/packages/thecodingmachine/csrf-header-check-middleware)
+[![Latest Unstable Version](https://poser.pugx.org/thecodingmachine/csrf-header-check-middleware/v/unstable)](https://packagist.org/packages/thecodingmachine/csrf-header-check-middleware)
+[![License](https://poser.pugx.org/thecodingmachine/csrf-header-check-middleware/license)](https://packagist.org/packages/thecodingmachine/csrf-header-check-middleware)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/thecodingmachine/csrf-header-check-middleware/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/thecodingmachine/csrf-header-check-middleware/?branch=master)
+[![Build Status](https://travis-ci.org/thecodingmachine/csrf-header-check-middleware.svg?branch=master)](https://travis-ci.org/thecodingmachine/csrf-header-check-middleware)
+[![Coverage Status](https://coveralls.io/repos/thecodingmachine/csrf-header-check-middleware/badge.svg?branch=master&service=github)](https://coveralls.io/github/thecodingmachine/csrf-header-check-middleware?branch=master)
+
 # CSRF header checking middleware
 
 This package contains a PHP PSR-15 (http-interop) compliant middleware that checks for CSRF attacks.
