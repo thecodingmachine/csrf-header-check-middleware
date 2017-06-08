@@ -14,7 +14,7 @@ It implements the [first OWASP general recommendation for guarding your site aga
 
 Note that OWASP recommends also using a CSRF token. This requires some changes in your application and this middleware does not provide any help regarding CSRF token generation.
 Other packages (like [Slim-CSRF](https://github.com/slimphp/Slim-Csrf)) can help you with CSRF token validation.
- 
+
 What is it doing?
 -----------------
 
@@ -28,3 +28,10 @@ Limits:
 
 - This middleware completely bypasses GET requests. If your application modifies state on GET requests, you are screwed. Of course, modification of state should only happen in POST requests (but please check twice that your routes changing state do ONLY works with POST/DELETE/PUT requests).
 - This middleware expects "Origin" or "Referrer" headers to be filled. This will often be true unless you are in a corporate environment with proxies that are fiddling with your request. For instance, some proxies are known to strip headers in order to make the request anonymous.
+
+Installation
+------------
+
+```php
+composer require thecodingmachine/csrf-header-check-middleware
+```
