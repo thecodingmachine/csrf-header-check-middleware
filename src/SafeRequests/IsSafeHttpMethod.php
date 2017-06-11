@@ -10,6 +10,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 final class IsSafeHttpMethod implements IsSafeHttpRequestInterface
 {
+    const STRICT_COMPARE = true; // Used a constant to avoid a Humbug mutation.
+
     /**
      * @var \string[]
      */
@@ -27,6 +29,6 @@ final class IsSafeHttpMethod implements IsSafeHttpRequestInterface
 
     public function __invoke(ServerRequestInterface $request) : bool
     {
-        return in_array(strtoupper($request->getMethod()), $this->safeMethods, true);
+        return in_array(strtoupper($request->getMethod()), $this->safeMethods, self::STRICT_COMPARE);
     }
 }

@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Zend\Diactoros\Response\TextResponse;
 
-abstract class AbstractMiddlewareTest extends TestCase
+abstract class AbstractMiddlewareTest extends \PHPUnit_Framework_TestCase
 {
     protected function getDelegate() : DelegateInterface
     {

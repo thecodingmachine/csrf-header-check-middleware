@@ -11,7 +11,7 @@ use Psr\Http\Message\UriInterface;
 /**
  * @covers \TheCodingMachine\Middlewares\SafeRequests\IsSafeHttpRoute
  */
-final class IsSafeHttpRouteTest extends TestCase
+final class IsSafeHttpRouteTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @dataProvider routesProvider
