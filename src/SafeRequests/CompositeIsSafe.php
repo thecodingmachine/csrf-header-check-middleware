@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TheCodingMachine\Middlewares\SafeRequests;
 
-
 use Psr\Http\Message\ServerRequestInterface;
 
 final class CompositeIsSafe implements IsSafeHttpRequestInterface

@@ -18,24 +18,12 @@ class CsrfHeaderCheckMiddlewareTest extends AbstractMiddlewareTest
     {
         $request = new ServerRequest([], [], "http://alice.com/hello", "Get");
 
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
+        $middleware = CsrfHeaderCheckMiddlewareFactory::createDefault();
 
 
         $response = $middleware->process($request, $this->getDelegate());
 
         $this->assertSame('foobar', (string) $response->getBody());
-    }
-
-    public function testFailingPostRequestNoOrigin()
-    {
-        $request = new ServerRequest([], [], "http://alice.com/hello", "Post");
-
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
-
-        $this->expectException(CsrfHeaderCheckMiddlewareException::class);
-        $this->expectExceptionMessage('Could not find neither the ORIGIN header nor the REFERER header in the HTTP request.');
-
-        $response = $middleware->process($request, $this->getDelegate());
     }
 
     public function testFailingPostRequestNoHost()
@@ -44,7 +32,7 @@ class CsrfHeaderCheckMiddlewareTest extends AbstractMiddlewareTest
         $request = $request->withHeader('Origin', "http://alice.com");
         $request = $request->withoutHeader('Host');
 
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
+        $middleware = CsrfHeaderCheckMiddlewareFactory::createDefault();
 
         $this->expectException(CsrfHeaderCheckMiddlewareException::class);
         $this->expectExceptionMessage('Could not find the HOST header in the HTTP request.');
@@ -57,7 +45,7 @@ class CsrfHeaderCheckMiddlewareTest extends AbstractMiddlewareTest
         $request = new ServerRequest([], [], "http://alice.com/hello", "Post");
         $request = $request->withHeader('Origin', "http://alice.com");
 
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
+        $middleware = CsrfHeaderCheckMiddlewareFactory::createDefault();
 
         $response = $middleware->process($request, $this->getDelegate());
 
@@ -69,20 +57,7 @@ class CsrfHeaderCheckMiddlewareTest extends AbstractMiddlewareTest
         $request = new ServerRequest([], [], "http://alice.com:8080/hello", "Post");
         $request = $request->withHeader('Origin', "http://alice.com:8080");
 
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
-
-        $response = $middleware->process($request, $this->getDelegate());
-
-        $this->assertSame('foobar', (string) $response->getBody());
-    }
-
-    public function testSuccessfullPostWithRefererAndForwardedHostAndPort()
-    {
-        $request = new ServerRequest([], [], "http://bob.com/hello", "Post");
-        $request = $request->withHeader('Referer', "http://alice.com");
-        $request = $request->withHeader('X-Forwarded-Host', "alice.com");
-
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
+        $middleware = CsrfHeaderCheckMiddlewareFactory::createDefault();
 
         $response = $middleware->process($request, $this->getDelegate());
 
@@ -94,7 +69,7 @@ class CsrfHeaderCheckMiddlewareTest extends AbstractMiddlewareTest
         $request = new ServerRequest([], [], "http://alice.com/hello", "Post");
         $request = $request->withHeader('Origin', "http://eve.com");
 
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
+        $middleware = CsrfHeaderCheckMiddlewareFactory::createDefault();
 
         $this->expectException(CsrfHeaderCheckMiddlewareException::class);
         $this->expectExceptionMessage('Potential CSRF attack stopped. Source origin and target origin do not match.');
@@ -107,7 +82,7 @@ class CsrfHeaderCheckMiddlewareTest extends AbstractMiddlewareTest
         $request = $request->withHeader('Origin', "http://eve.com");
         $request = $request->withAddedHeader('Origin', "http://alice.com");
 
-        $middleware = new CsrfHeaderCheckMiddleware(IsSafeHttpMethod::fromDefaultSafeMethods());
+        $middleware = CsrfHeaderCheckMiddlewareFactory::createDefault();
 
         $this->expectException(CsrfHeaderCheckMiddlewareException::class);
         $this->expectExceptionMessage('Unexpected request: more than one ORIGIN header sent.');

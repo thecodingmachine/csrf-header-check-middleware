@@ -7,6 +7,8 @@ use Interop\Http\ServerMiddleware\DelegateInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use TheCodingMachine\Middlewares\OriginFetchers\SourceOriginInterface;
+use TheCodingMachine\Middlewares\OriginFetchers\TargetOriginInterface;
 use TheCodingMachine\Middlewares\SafeRequests\IsSafeHttpRequestInterface;
 
 /**
@@ -18,10 +20,29 @@ final class CsrfHeaderCheckMiddleware implements MiddlewareInterface
      * @var IsSafeHttpRequestInterface
      */
     private $isSafeHttpRequest;
+    /**
+     * @var TargetOriginInterface
+     */
+    private $targetOrigins;
 
-    public function __construct(IsSafeHttpRequestInterface $isSafeHttpRequest)
+    /**
+     * @var SourceOriginInterface
+     */
+    private $sourceOrigin;
+
+    const STRICT_COMPARE = true;
+
+    /**
+     * CsrfHeaderCheckMiddleware constructor.
+     * @param IsSafeHttpRequestInterface $isSafeHttpRequest
+     * @param TargetOriginInterface $targetOrigins
+     * @param SourceOriginInterface $sourceOrigin
+     */
+    public function __construct(IsSafeHttpRequestInterface $isSafeHttpRequest, TargetOriginInterface $targetOrigins, SourceOriginInterface $sourceOrigin)
     {
         $this->isSafeHttpRequest = $isSafeHttpRequest;
+        $this->targetOrigins = $targetOrigins;
+        $this->sourceOrigin = $sourceOrigin;
     }
 
     /**
@@ -37,66 +58,16 @@ final class CsrfHeaderCheckMiddleware implements MiddlewareInterface
     {
         $isSafeHttpRequest = $this->isSafeHttpRequest;
         if (!$isSafeHttpRequest($request)) {
-            $source = $this->getSourceOrigin($request);
-            $target = $this->getTargetOrigin($request);
-            if ($source !== $target) {
+            $sourceOrigin = $this->sourceOrigin;
+            $targetOrigins = $this->targetOrigins;
+
+            $source = $sourceOrigin($request);
+            $targets = $targetOrigins($request);
+
+            if (!in_array($source, $targets, self::STRICT_COMPARE)) {
                 throw new CsrfHeaderCheckMiddlewareException('Potential CSRF attack stopped. Source origin and target origin do not match.');
             }
         }
         return $delegate->process($request);
-    }
-
-    private function getSourceOrigin(ServerRequestInterface $request): string
-    {
-        $source = $this->getHeaderLine($request, 'ORIGIN');
-        if (null !== $source) {
-            return parse_url($source, PHP_URL_HOST);
-        }
-
-        $referrer = $this->getHeaderLine($request, 'REFERER');
-        if (null === $referrer) {
-            throw new CsrfHeaderCheckMiddlewareException('Could not find neither the ORIGIN header nor the REFERER header in the HTTP request.');
-        }
-
-        return parse_url($referrer, PHP_URL_HOST);
-    }
-
-    private function getTargetOrigin(ServerRequestInterface $request): string
-    {
-        $host = $this->getHeaderLine($request, 'X-FORWARDED-HOST');
-        if (null === $host) {
-            $host = $this->getHeaderLine($request, 'HOST');
-        }
-
-        if (null === $host) {
-            throw new CsrfHeaderCheckMiddlewareException('Could not find the HOST header in the HTTP request.');
-        }
-        return $this->removePortFromHost($host);
-    }
-
-    private function removePortFromHost(string $host)
-    {
-        return parse_url('http://'.$host, PHP_URL_HOST);
-    }
-
-    /**
-     * Returns the header, throws an exception if the header is specified more that one in the request.
-     * Returns null if nothing found.
-     *
-     * @param ServerRequestInterface $request
-     * @param string $header
-     * @return string|null
-     * @throws CsrfHeaderCheckMiddlewareException
-     */
-    private function getHeaderLine(ServerRequestInterface $request, string $header)
-    {
-        $values = $request->getHeader($header);
-        if (count($values) > 1) {
-            throw new CsrfHeaderCheckMiddlewareException("Unexpected request: more than one $header header sent.");
-        }
-        if (count($values) === 1) {
-            return $values[0];
-        }
-        return null;
     }
 }

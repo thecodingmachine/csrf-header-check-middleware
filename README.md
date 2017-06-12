@@ -21,7 +21,7 @@ What is it doing?
 The `CsrfHeaderCheckMiddleware` will look at all POST/PUT/DELETE requests (actually all requests that are not GET/HEAD/OPTIONS).
 It will verify that the "Origin" of the request is your own website.
 
-It does so by comparing the "Origin" (or the "Referrer" header as a fallback) to the "Host" (or "X-Forwarded-Host") header.
+It does so by comparing the "Origin" (or the "Referrer" header as a fallback) to your website's domain name.
 If the headers do not match (or if the headers are not found), it will trigger an exception.
 
 Why does it work?
@@ -32,9 +32,7 @@ The attacker (Eve) sends Alice a malicious link to her malicious website. The ma
 
 The query is therefore executed by Alice's computer. We can expect Alice's browser to behave as a "normal" browsers.
 
-- Normal browsers always send the "Host" header (at least in HTTP 1.1).
-- Normal browsers [do not allow Javascript code to modify the "Origin" or "Referer" header](https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_header_name).
-- Normal browsers do not allow Javascript code to send the "X-Forwarded-Host" header (TODO: check this!)
+Normal browsers [do not allow Javascript code to modify the "Origin" or "Referer" header](https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_header_name).
 
 How does it compare to other solutions
 --------------------------------------
@@ -49,10 +47,10 @@ With token-based middlewares, you have to modify your application to generate a 
 
 ### Limits
 
-- Works only with HTTP 1.1 requests (in HTTP 1.0, the "Host" header is not set)
 - This middleware completely bypasses GET requests. If your application modifies state on GET requests, you are screwed. Of course, modification of state should only happen in POST requests (but please check twice that your routes changing state do ONLY works with POST/DELETE/PUT requests).
-- This middleware expects "Origin" or "Referrer" headers to be filled. This will often be true unless you are in a corporate environment with proxies that are fiddling with your request. For instance, some proxies are known to strip headers in order to make the request anonymous.
-- Will block CORS requests. You cannot use this middleware if you are expecting requests to come from another origin than your website. 
+- This middleware expects "Origin" or "Referer" headers to be filled. This will often be true unless you are in a corporate environment with proxies that are fiddling with your request. For instance, some proxies are known to strip headers in order to make the request anonymous.
+- Will block CORS requests. You cannot use this middleware if you are expecting requests to come from another origin than your website.
+- If your website is accessed from a third party application (like a phone app), you cannot use this middleware as the Origin and Referer will be empty.
 
 If you are in one of those situations, use a token-based middleware instead.
 
@@ -79,15 +77,41 @@ $app = \Zend\Expressive\AppFactory::create();
 $app->pipe(\TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareFactory::createDefault();
 ```
 
+Guessing your domain name
+-------------------------
+
+This middleware will do its best to "guess" the domain name of your website. To do so, it will check the "Host" header of the HTTP request.
+
+You need to know this:
+
+- Normal browsers always send the "Host" header (at least in HTTP 1.1).
+- In a normal browser, the "Host" header cannot be modified by Javascript code.
+
+However:
+
+- The "Host" header can be modified by proxies
+- Proxies will generally put the previous "Host" header in the "X-Forwarded-Host" header
+- The "X-Forwarded-Host" header CANNOT be trusted because it can be changed from the client side (in Javascript)
+
+Therefore, if you run your application behind a proxy, or if you deal for some reason with HTTP/1.0, you will have to manually specify the domain name of your application.
+
+```php
+// The first argument of the factory is a list of domain name for your application.
+$app->pipe(\TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareFactory::createDefault([
+    'alice.com',
+    'www.alice.com'
+]);
+```
+
 Disabling CSRF checks
 ---------------------
 
 You can disable CSRF checks on a per-route basis:
 
 ```php
-// The first argument of the factory is a list of regular expressions that will be matched on the path.
+// The second argument of the factory is a list of regular expressions that will be matched on the path.
 // Here, we disable CSRF checks on /api/*
-$app->pipe(\TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareFactory::createDefault([
+$app->pipe(\TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareFactory::createDefault([], [
     '#^/api/#'
 ]);
 ```

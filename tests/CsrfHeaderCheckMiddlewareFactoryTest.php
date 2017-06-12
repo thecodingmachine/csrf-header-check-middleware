@@ -2,7 +2,6 @@
 
 namespace TheCodingMachine\Middlewares;
 
-
 use PHPUnit\Framework\TestCase;
 use Zend\Diactoros\ServerRequest;
 

@@ -2,7 +2,6 @@
 
 namespace TheCodingMachine\Middlewares\SafeRequests;
 
-
 use PHPUnit\Framework\TestCase;
 use Zend\Diactoros\ServerRequest;
 
