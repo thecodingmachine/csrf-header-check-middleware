@@ -1,16 +1,49 @@
 <?php
+declare(strict_types=1);
+
 namespace TheCodingMachine\Middlewares;
 
 use Interop\Http\ServerMiddleware\DelegateInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use TheCodingMachine\Middlewares\OriginFetchers\SourceOriginInterface;
+use TheCodingMachine\Middlewares\OriginFetchers\TargetOriginInterface;
+use TheCodingMachine\Middlewares\SafeRequests\IsSafeHttpRequestInterface;
 
 /**
- * This class will check that all POST/DELETE requests and verify that the "Origin" of the request is your own website.
+ * This class will check that all POST/PUT/DELETE... requests and verify that the "Origin" of the request is your own website.
  */
-class CsrfHeaderCheckMiddleware implements MiddlewareInterface
+final class CsrfHeaderCheckMiddleware implements MiddlewareInterface
 {
+    /**
+     * @var IsSafeHttpRequestInterface
+     */
+    private $isSafeHttpRequest;
+    /**
+     * @var TargetOriginInterface
+     */
+    private $targetOrigins;
+
+    /**
+     * @var SourceOriginInterface
+     */
+    private $sourceOrigin;
+
+    const STRICT_COMPARE = true;
+
+    /**
+     * CsrfHeaderCheckMiddleware constructor.
+     * @param IsSafeHttpRequestInterface $isSafeHttpRequest
+     * @param TargetOriginInterface $targetOrigins
+     * @param SourceOriginInterface $sourceOrigin
+     */
+    public function __construct(IsSafeHttpRequestInterface $isSafeHttpRequest, TargetOriginInterface $targetOrigins, SourceOriginInterface $sourceOrigin)
+    {
+        $this->isSafeHttpRequest = $isSafeHttpRequest;
+        $this->targetOrigins = $targetOrigins;
+        $this->sourceOrigin = $sourceOrigin;
+    }
 
     /**
      * Process an incoming server request and return a response, optionally delegating
@@ -23,70 +56,18 @@ class CsrfHeaderCheckMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate)
     {
-        $method = strtoupper($request->getMethod());
-        if (in_array($method, ['POST', 'PUT', 'DELETE'], true)) {
-            $source = $this->getSourceOrigin($request);
-            $target = $this->getTargetOrigin($request);
-            if ($source !== $target) {
-                throw new CsrfHeaderCheckMiddlewareException("Potential CSRF attack stopped. Source origin and target origin do not match.");
+        $isSafeHttpRequest = $this->isSafeHttpRequest;
+        if (!$isSafeHttpRequest($request)) {
+            $sourceOrigin = $this->sourceOrigin;
+            $targetOrigins = $this->targetOrigins;
+
+            $source = $sourceOrigin($request);
+            $targets = $targetOrigins($request);
+
+            if (!in_array($source, $targets, self::STRICT_COMPARE)) {
+                throw new CsrfHeaderCheckMiddlewareException('Potential CSRF attack stopped. Source origin and target origin do not match.');
             }
         }
         return $delegate->process($request);
-    }
-
-    private function getSourceOrigin(ServerRequestInterface $request): string
-    {
-        $source = $this->getHeaderLine($request, 'ORIGIN');
-        if ($source === null) {
-            $referrer = $this->getHeaderLine($request, 'REFERER');
-            if ($referrer === null) {
-                throw new CsrfHeaderCheckMiddlewareException("Could not find neither the ORIGIN header nor the REFERER header in the HTTP request.");
-            }
-
-            $source = parse_url($referrer, PHP_URL_HOST);
-        } else {
-            $source = parse_url($source, PHP_URL_HOST);
-        }
-
-        return $source;
-    }
-
-    private function getTargetOrigin(ServerRequestInterface $request): string
-    {
-        $host = $this->getHeaderLine($request, 'X-FORWARDED-HOST');
-        if ($host === null) {
-            $host = $this->getHeaderLine($request, 'HOST');
-        }
-
-        if ($host === null) {
-            throw new CsrfHeaderCheckMiddlewareException("Could not find the HOST header in the HTTP request.");
-        }
-        return $this->removePortFromHost($host);
-    }
-
-    private function removePortFromHost(string $host)
-    {
-        return parse_url('http://'.$host, PHP_URL_HOST);
-    }
-
-    /**
-     * Returns the header, throws an exception if the header is specified more that one in the request.
-     * Returns null if nothing found.
-     *
-     * @param ServerRequestInterface $request
-     * @param string $headerLine
-     * @return string|null
-     * @throws CsrfHeaderCheckMiddlewareException
-     */
-    private function getHeaderLine(ServerRequestInterface $request, string $headerLine)
-    {
-        $hosts = $request->getHeader($headerLine);
-        if (count($hosts) > 1) {
-            throw new CsrfHeaderCheckMiddlewareException("Unexpected request: more than one $headerLine header sent.");
-        }
-        if (count($hosts) === 1) {
-            return $hosts[0];
-        }
-        return null;
     }
 }

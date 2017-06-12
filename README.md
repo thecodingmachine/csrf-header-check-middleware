@@ -18,20 +18,109 @@ Other packages (like [Slim-CSRF](https://github.com/slimphp/Slim-Csrf)) can help
 What is it doing?
 -----------------
 
-The `CsrfHeaderCheckMiddleware` will check that all POST/PUT/DELETE requests and verify that the "Origin" of the request is your own website.
+The `CsrfHeaderCheckMiddleware` will look at all POST/PUT/DELETE requests (actually all requests that are not GET/HEAD/OPTIONS).
+It will verify that the "Origin" of the request is your own website.
 
-It does so by comparing the "Origin" (or the "Referrer" header as a fallback) to the "Host" (or "X-Forwarded-Host") header.
+It does so by comparing the "Origin" (or the "Referrer" header as a fallback) to your website's domain name.
 If the headers do not match (or if the headers are not found), it will trigger an exception.
 
-Limits:
--------
+Why does it work?
+-----------------
+
+In a CSRF attack, the victim (Alice) is logged in your application.
+The attacker (Eve) sends Alice a malicious link to her malicious website. The malicious website contains some Javascript that performs a POST on a form of your website. Since Alice is logged into your website, the POST succeeds, allowing Eve to perform actions on the behalf of Alice.
+
+The query is therefore executed by Alice's computer. We can expect Alice's browser to behave as a "normal" browsers.
+
+Normal browsers [do not allow Javascript code to modify the "Origin" or "Referer" header](https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_header_name).
+
+How does it compare to other solutions
+--------------------------------------
+
+When fighting CSRF attacks, the most common solution used it to generate a token in each form, store this token in session, and check that the user sends back the token.
+If you are looking for a CSRF token based middleware using PSR-7/PSR-15, have a look at [Ocramius/PSR7Csrf](https://github.com/Ocramius/PSR7Csrf/)
+
+### Advantages over token based implementations
+
+Checking for HTTP headers can be done in the middleware alone.
+With token-based middlewares, you have to modify your application to generate a token and send the token with any form. In contrast, checking headers requires no work besides adding the middleware. So it's really fast to deploy.
+
+### Limits
 
 - This middleware completely bypasses GET requests. If your application modifies state on GET requests, you are screwed. Of course, modification of state should only happen in POST requests (but please check twice that your routes changing state do ONLY works with POST/DELETE/PUT requests).
-- This middleware expects "Origin" or "Referrer" headers to be filled. This will often be true unless you are in a corporate environment with proxies that are fiddling with your request. For instance, some proxies are known to strip headers in order to make the request anonymous.
+- This middleware expects "Origin" or "Referer" headers to be filled. This will often be true unless you are in a corporate environment with proxies that are fiddling with your request. For instance, some proxies are known to strip headers in order to make the request anonymous.
+- Will block CORS requests. You cannot use this middleware if you are expecting requests to come from another origin than your website.
+- If your website is accessed from a third party application (like a phone app), you cannot use this middleware as the Origin and Referer will be empty.
+
+If you are in one of those situations, use a token-based middleware instead.
 
 Installation
 ------------
 
 ```php
 composer require thecodingmachine/csrf-header-check-middleware
+```
+
+Usage
+-----
+
+The simplest usage is based on defaults. It assumes that you have
+a configured PSR-7 compatible application that supports piping
+middlewares.
+
+In a [`zendframework/zend-expressive`](https://github.com/zendframework/zend-expressive)
+application, the setup would look like the following:
+
+```php
+$app = \Zend\Expressive\AppFactory::create();
+
+$app->pipe(\TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareFactory::createDefault();
+```
+
+Guessing your domain name
+-------------------------
+
+This middleware will do its best to "guess" the domain name of your website. To do so, it will check the "Host" header of the HTTP request.
+
+You need to know this:
+
+- Normal browsers always send the "Host" header (at least in HTTP 1.1).
+- In a normal browser, the "Host" header cannot be modified by Javascript code.
+
+However:
+
+- The "Host" header can be modified by proxies
+- Proxies will generally put the previous "Host" header in the "X-Forwarded-Host" header
+- The "X-Forwarded-Host" header CANNOT be trusted because it can be changed from the client side (in Javascript)
+
+Therefore, if you run your application behind a proxy, or if you deal for some reason with HTTP/1.0, you will have to manually specify the domain name of your application.
+
+```php
+// The first argument of the factory is a list of domain name for your application.
+$app->pipe(\TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareFactory::createDefault([
+    'alice.com',
+    'www.alice.com'
+]);
+```
+
+Disabling CSRF checks
+---------------------
+
+You can disable CSRF checks on a per-route basis:
+
+```php
+// The second argument of the factory is a list of regular expressions that will be matched on the path.
+// Here, we disable CSRF checks on /api/*
+$app->pipe(\TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareFactory::createDefault([], [
+    '#^/api/#'
+]);
+```
+
+This can be useful for APIs that are only used when communicating from server to server. Please note that if you decide to disable CSRF for some routes, you need to have some other forms of protection for this route.
+
+Alternatively, any request passed to the middleware that has the 'TheCodingMachine\BypassCsrf' attribute set will be ignored:
+
+```php
+// Put this in a middleware placed before the `CsrfHeaderCheckMiddleware` to disable it.
+$request = $request->withAttribute('TheCodingMachine\\BypassCsrf', true);
 ```
