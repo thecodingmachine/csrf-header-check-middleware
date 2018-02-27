@@ -5,7 +5,7 @@ namespace TheCodingMachine\Middlewares\SafeRequests;
 use PHPUnit\Framework\TestCase;
 use Zend\Diactoros\ServerRequest;
 
-class IsBypassedCheckTest extends \PHPUnit_Framework_TestCase
+class IsBypassedCheckTest extends TestCase
 {
     public function testBypassCheck()
     {

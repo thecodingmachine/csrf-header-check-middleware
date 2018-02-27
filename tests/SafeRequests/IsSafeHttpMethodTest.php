@@ -10,7 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * @covers \TheCodingMachine\Middlewares\SafeRequests\IsSafeHttpMethod
  */
-final class IsSafeHttpMethodTest extends \PHPUnit_Framework_TestCase
+final class IsSafeHttpMethodTest extends TestCase
 {
     /**
      * @dataProvider httpMethodsProvider
