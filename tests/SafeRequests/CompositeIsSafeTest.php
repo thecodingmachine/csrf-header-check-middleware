@@ -5,7 +5,7 @@ namespace TheCodingMachine\Middlewares\SafeRequests;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 
-class CompositeIsSafeTest extends \PHPUnit_Framework_TestCase
+class CompositeIsSafeTest extends TestCase
 {
     private function getChecker(bool $result): IsSafeHttpRequestInterface
     {

@@ -2,10 +2,11 @@
 
 namespace TheCodingMachine\Middlewares\OriginFetchers;
 
+use PHPUnit\Framework\TestCase;
 use TheCodingMachine\Middlewares\CsrfHeaderCheckMiddlewareException;
 use Zend\Diactoros\ServerRequest;
 
-class HostHeaderTest extends \PHPUnit_Framework_TestCase
+class HostHeaderTest extends TestCase
 {
     public function testFetchHost()
     {
