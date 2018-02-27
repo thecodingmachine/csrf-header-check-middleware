@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace TheCodingMachine\Middlewares;
 
-use Interop\Http\ServerMiddleware\DelegateInterface;
-use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use TheCodingMachine\Middlewares\OriginFetchers\SourceOriginInterface;
 use TheCodingMachine\Middlewares\OriginFetchers\TargetOriginInterface;
 use TheCodingMachine\Middlewares\SafeRequests\IsSafeHttpRequestInterface;
@@ -50,11 +50,11 @@ final class CsrfHeaderCheckMiddleware implements MiddlewareInterface
      * to the next middleware component to create the response.
      *
      * @param ServerRequestInterface $request
-     * @param DelegateInterface $delegate
+     * @param RequestHandlerInterface $delegate
      * @return ResponseInterface
      * @throws CsrfHeaderCheckMiddlewareException
      */
-    public function process(ServerRequestInterface $request, DelegateInterface $delegate)
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $delegate): ResponseInterface
     {
         $isSafeHttpRequest = $this->isSafeHttpRequest;
         if (!$isSafeHttpRequest($request)) {
@@ -68,6 +68,6 @@ final class CsrfHeaderCheckMiddleware implements MiddlewareInterface
                 throw new CsrfHeaderCheckMiddlewareException('Potential CSRF attack stopped. Source origin and target origin do not match.');
             }
         }
-        return $delegate->process($request);
+        return $delegate->handle($request);
     }
 }

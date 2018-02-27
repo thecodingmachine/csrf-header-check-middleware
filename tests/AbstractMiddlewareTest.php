@@ -3,16 +3,17 @@
 
 namespace TheCodingMachine\Middlewares;
 
-use Interop\Http\ServerMiddleware\DelegateInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Zend\Diactoros\Response\TextResponse;
 
 abstract class AbstractMiddlewareTest extends TestCase
 {
-    protected function getDelegate() : DelegateInterface
+    protected function getDelegate() : RequestHandlerInterface
     {
-        return new class implements DelegateInterface {
+        return new class implements RequestHandlerInterface {
 
             /**
              * Dispatch the next available middleware and return the response.
@@ -21,7 +22,7 @@ abstract class AbstractMiddlewareTest extends TestCase
              *
              * @return ResponseInterface
              */
-            public function process(ServerRequestInterface $request)
+            public function handle(ServerRequestInterface $request):ResponseInterface
             {
                 return new TextResponse('foobar');
             }
