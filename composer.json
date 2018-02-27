@@ -1,6 +1,6 @@
 {
     "name": "thecodingmachine/csrf-header-check-middleware",
-    "description": "A PHP PSR-15 (http-interop) compliant middleware that checks for CSRF attacks.",
+    "description": "A PHP PSR-15 compliant middleware that checks for CSRF attacks.",
     "license": "MIT",
     "authors": [
         {
@@ -9,7 +9,8 @@
         }
     ],
     "require": {
-        "http-interop/http-middleware": "^0.4"
+        "php" : ">=7",
+        "psr/http-server-middleware": "^1.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^7.0.2",
@@ -30,7 +31,7 @@
     "prefer-stable": true,
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0.x-dev"
+            "dev-master": "2.0.x-dev"
         }
     }
 }

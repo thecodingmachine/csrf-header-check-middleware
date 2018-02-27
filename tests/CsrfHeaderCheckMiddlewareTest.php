@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace TheCodingMachine\Middlewares;
 
-use Interop\Http\ServerMiddleware\DelegateInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

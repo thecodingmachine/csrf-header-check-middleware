@@ -8,7 +8,7 @@
 
 # CSRF header checking middleware
 
-This package contains a PHP PSR-15 (http-interop) compliant middleware that checks for CSRF attacks.
+This package contains a PHP PSR-15 compliant middleware that checks for CSRF attacks.
 
 It implements the [first OWASP general recommendation for guarding your site against cross-site request forgery (Verifying Same Origin with Standard Headers)](https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet).
 
