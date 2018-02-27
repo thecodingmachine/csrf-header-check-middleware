@@ -11,9 +11,12 @@ env:
   - PREFER_LOWEST=""
 before_script:
 - composer update --prefer-dist $PREFER_LOWEST
-- git clone https://github.com/padraic/humbug.git && cd humbug && composer install && cd ..
+- wget https://github.com/infection/infection/releases/download/0.7.1/infection.phar
+- wget https://github.com/infection/infection/releases/download/0.7.1/infection.phar.pubkey
+- chmod +x infection.phar
+- mkdir -p build/logs
 script:
 - "./vendor/bin/phpunit"
-- ./humbug/bin/humbug
+- ./infection.phar
 after_script:
 - if [ -z "$PREFER_LOWEST" ]; then ./vendor/bin/coveralls -v; fi
